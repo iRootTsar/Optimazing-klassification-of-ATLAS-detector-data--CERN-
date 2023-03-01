@@ -40,3 +40,10 @@ Numpy
 conda
 matplotlib
 fastai
+sys
+pathlib
+
+# In case commits link to another user
+Open terminal in vscode (despite what kernel you used)
+git config user.email "Your email"
+git config user.email
