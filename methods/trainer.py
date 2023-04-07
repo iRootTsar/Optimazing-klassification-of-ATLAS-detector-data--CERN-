@@ -114,7 +114,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
 
     # Plot the metrics
     plt.figure(figsize=(18, 9))
-    plt.subplot(2, 2, 1)
+    plt.subplot(2, 3, 1)
     plt.plot(train_losses, label='Train Loss')
     plt.plot(test_losses, label='Test Loss')
     plt.legend()
@@ -122,7 +122,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
     plt.ylabel('Loss')
     plt.title('Train and Test Loss')
 
-    plt.subplot(2, 2, 2)
+    plt.subplot(2, 3, 2)
     plt.plot(train_accs, label='Train Accuracy')
     plt.plot(test_accs, label='Test Accuracy')
     plt.legend()
@@ -130,21 +130,21 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
     plt.ylabel('Accuracy')
     plt.title('Train and Test Accuracy')
 
-    plt.subplot(2, 2, 3)
+    plt.subplot(2, 3, 3)
     plt.plot(black_holes_accs, label='Black Holes Accuracy')
     plt.legend()
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.title('Black Holes Accuracy')
 
-    plt.subplot(2, 2, 4)
+    plt.subplot(2, 3, 4)
     plt.plot(sphalerons_accs, label='Sphalerons Accuracy')
     plt.legend()
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.title('Sphalerons Accuracy')
     
-    plt.subplot(2, 4, 5)
+    plt.subplot(2, 3, 5)
     plt.plot(black_holes_precisions, label='Black Holes Precision')
     plt.plot(sphalerons_precisions, label='Sphalerons Precision')
     plt.legend()
@@ -152,7 +152,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
     plt.ylabel('Precision')
     plt.title('Black Holes and Sphalerons Precision')
 
-    plt.subplot(2, 4, 6)
+    plt.subplot(2, 3, 6)
     plt.plot(black_holes_recalls, label='Black Holes Recall')
     plt.plot(sphalerons_recalls, label='Sphalerons Recall')
     plt.legend()
