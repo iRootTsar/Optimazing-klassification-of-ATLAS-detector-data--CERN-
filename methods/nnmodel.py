@@ -76,14 +76,26 @@ class SymmetricNet(nn.Module):
 
 
 
-class ConvModel(nn.Module):
+#Convomodel that works when use data augmentation
+
+class ConvModelAug(nn.Module):
     def __init__(self, dropout):
-        super(ConvModel, self).__init__()
+        super(ConvModelAug, self).__init__()
 
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=64, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=256, kernel_size=3, padding=1)
-        self.fc1 = nn.Linear(256 * 7 * 7, 128)
+        
+        # Determine the input shape for fc1 after the pooling layers
+        def calc_output_shape(input_size, kernel_size, stride, padding):
+            return (input_size + 2 * padding - (kernel_size - 1) - 1) // stride + 1
+
+        input_size = 50
+        input_size = calc_output_shape(input_size, 2, 2, 0)  # First max pool
+        input_size = calc_output_shape(input_size, 2, 2, 0)  # Second max pool
+        input_size = calc_output_shape(input_size, 2, 2, 0)  # Third max pool
+        
+        self.fc1 = nn.Linear(256 * input_size * input_size, 128)
         self.fc2 = nn.Linear(128, 2)
         self.dropout = nn.Dropout(dropout)
 
@@ -104,7 +116,7 @@ class ConvModel(nn.Module):
         x = self.fc2(x)
         x = self.dropout(x)
         return x
-    
+
 
 #VGG architecture with first pooling layer adjustments
 
