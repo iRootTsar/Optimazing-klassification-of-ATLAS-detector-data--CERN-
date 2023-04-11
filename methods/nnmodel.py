@@ -75,7 +75,72 @@ class SymmetricNet(nn.Module):
         return x
 
 
+#Regular convModel
 
+#Define the ConvModel class
+class ConvModel(nn.Module):
+    #Constructor that initializes the layers of the model
+    def __init__(self, dropout):
+
+        super(ConvModel, self).__init__()
+        #opprette conv lag. Bildene har 3 lag 
+        #Define convolutional layers for the input image
+        #Input image has 3 challes, 3 layers
+        #The first convolutional layer has 16 output channels and uses a kernel size of 3x3
+        #ANd padding is set to 0
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=0)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=64, kernel_size=3, padding=0)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=256, kernel_size=3, padding=0)
+        #kanskje ha flere layers?
+
+        #Unchange
+        #Define fully connected layers
+        #Input size to the first fully connected layer is 3*3*256
+        #The first fully connected layer has 128 output units
+        #The secon fully connected layer has 2 output units
+        self.fc1 = nn.Linear(3*3*256, 128)
+        self.fc2 = nn.Linear(128,2)
+
+        #Define the dropout layer to prevent overfitting
+        self.dropout = nn.Dropout(dropout)
+
+
+    #Enten her eller over skal komme endringane for convolutional layer
+    def forward(self, x:Tensor):
+        
+        #x = F.conv2d(x, self.conv1_filter, bias=self.conv1.bias, stride=1, padding=1)
+        #Apply first conv layer
+        x= self.conv1(x)
+        #Apply relu activation function
+        x = F.relu(x) 
+        #Apply max pooling with a kernel size 2
+        x = F.max_pool2d(x,2)
+        #Apply the second conv layer
+        x = self.conv2(x)
+        #Apply relu activation function
+        x = F.relu(x)
+        #Apply max pooling with a kernel size of 2
+        x = F.max_pool2d(x,2)
+        #Apply the third conv layer
+        x = self.conv3(x)
+        #Apply relu activation function
+        x = F.relu(x)
+        #Appply max pooling with a kernel size 3
+        x = F.max_pool2d(x,3)
+        
+        #Flatten the output of the conv layers
+        x = torch.flatten(x, 1)
+        
+        #Apply the first fully connected layer
+        x = self.fc1(x)
+        #Apply relu activation function
+        x = F.relu(x)
+        x = self.dropout(x)
+        #Apply teh second fully connected layer
+        x = self.fc2(x)
+        x = self.dropout(x)
+        #Apply droput to layers??
+        return x
 #Convomodel that works when use data augmentation
 
 class ConvModelAug(nn.Module):
