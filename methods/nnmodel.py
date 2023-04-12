@@ -249,6 +249,86 @@ class VGGNet(nn.Module):
         x = self.classifier(x)
         return x
 
+#VGG updated
+class VGGNet2(nn.Module):
+    def __init__(self, dropout):
+        super(VGGNet2, self).__init__()
+
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout(dropout),
+
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout(dropout),
+
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout(dropout),
+
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout(dropout),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 3 * 3, 1024),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout),
+            nn.Linear(1024, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout),
+            nn.Linear(512, 256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout),
+            nn.Linear(256, 2),
+        )
+
+    def forward(self, x):
+        x_flipped_horizontal = torch.flip(x, [3])  # flip horizontally
+        x_flipped_vertical = torch.flip(x, [2])  # flip vertically
+        x_rotated_180 = torch.rot90(x, 2, [2, 3])  # rotate 180
+
+        x = self.features(x)
+        x_flipped_horizontal = self.features(x_flipped_horizontal)
+        x_flipped_vertical = self.features(x_flipped_vertical)
+        x_rotated_180 = self.features(x_rotated_180)
+
+        x = (x + x_flipped_horizontal + x_flipped_vertical + x_rotated_180) / 4
+
+        x = x.reshape(-1, 512 * 3 * 3)
+        x = self.classifier(x)
+        return x
 
 
 #ResNet like model with first pooling layer adjustments

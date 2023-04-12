@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 
+# Set random seeds for reproducibility
+torch.manual_seed(42)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
 if torch.cuda.is_available():
     device = torch.device("cuda")
     print("Running on the GPU")
@@ -12,7 +17,7 @@ else:
     device = torch.device("cpu")
     print("Running on the CPU")
 
-def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
+def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, scheduler, early_stopping_patience):
     
     # Initialize lists to store the metrics
     train_losses = []
@@ -27,6 +32,10 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
     sphalerons_recalls = []
     black_holes_f1_scores = []
     sphalerons_f1_scores = []
+    
+    best_val_loss = float('inf')
+    best_model_state_dict = None
+    no_improvement_count = 0
     
     for epoch in range(n_epochs):
         # Train
@@ -117,6 +126,20 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
         black_holes_f1_scores.append(black_holes_f1_score)
         sphalerons_f1_scores.append(sphalerons_f1_score)
 
+        scheduler.step(val_loss) #Update learning rate using the scheduler
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model_state_dict = model.state_dict()
+            no_improvement_count = 0
+        else:
+            no_improvement_count += 1
+        
+        if no_improvement_count >= early_stopping_patience:
+            print(f"Early stopping at epoch {epoch}")
+            break
+     # Load the best model state
+    model.load_state_dict(best_model_state_dict)
+        
     # Plot the metrics
     plt.figure(figsize=(18, 18))
     plt.subplot(3, 3, 1)

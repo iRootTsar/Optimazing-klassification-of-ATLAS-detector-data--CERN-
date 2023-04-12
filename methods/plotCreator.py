@@ -22,3 +22,5 @@ def tripplePlot(array1, array2, array3):
     plt.subplot(1,3,3)
     plt.imshow(array3, cmap='gray')
     plt.show()
+    
+    
