@@ -107,10 +107,10 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
         black_holes_recall, sphalerons_recall = recall
         black_holes_f1_score, sphalerons_f1_score = f1_scores
 
-        # Print results
-        print(f"Epoch: {epoch}/{n_epochs}")
-        print(f"Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.2f}%")
-        print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
+        # # Print results
+        # print(f"Epoch: {epoch}/{n_epochs}")
+        # print(f"Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.2f}%")
+        # print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
 
         # Append the metrics to the lists
         train_losses.append(train_loss)
