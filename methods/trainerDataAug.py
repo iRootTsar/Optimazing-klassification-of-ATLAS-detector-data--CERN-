@@ -17,7 +17,7 @@ else:
     device = torch.device("cpu")
     print("Running on the CPU")
 
-def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, scheduler, early_stopping_patience):
+def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, scheduler):
     
     # Initialize lists to store the metrics
     train_losses = []
@@ -36,6 +36,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
     best_val_loss = float('inf')
     best_model_state_dict = None
     no_improvement_count = 0
+    
     
     for epoch in range(n_epochs):
         # Train
@@ -101,6 +102,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
         black_holes_acc = 100 * black_holes_correct / black_holes_total
         sphalerons_acc = 100 * sphalerons_correct / sphalerons_total
         test_loss /= len(test_loader)
+        
         # Calculate precision and recall
         precision, recall, f1_scores, _ = precision_recall_fscore_support(all_labels, all_preds, average=None)
         black_holes_precision, sphalerons_precision = precision
@@ -127,18 +129,6 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
         sphalerons_f1_scores.append(sphalerons_f1_score)
 
         scheduler.step(val_loss) #Update learning rate using the scheduler
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            best_model_state_dict = model.state_dict()
-            no_improvement_count = 0
-        else:
-            no_improvement_count += 1
-        
-        if no_improvement_count >= early_stopping_patience:
-            print(f"Early stopping at epoch {epoch}")
-            break
-     # Load the best model state
-    model.load_state_dict(best_model_state_dict)
     
     # Return the collected metrics
     metrics = {
@@ -157,79 +147,3 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
     }
     
     return metrics
-        
-    # Plot the metrics
-    plt.figure(figsize=(18, 18))
-    plt.subplot(3, 3, 1)
-    plt.plot(train_losses, label='Train Loss')
-    plt.plot(test_losses, label='Test Loss')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Train and Test Loss')
-
-    plt.subplot(3, 3, 2)
-    plt.plot(train_accs, label='Train Accuracy')
-    plt.plot(test_accs, label='Test Accuracy')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.title('Train and Test Accuracy')
-
-    plt.subplot(3, 3, 3)
-    plt.plot(black_holes_accs, label='Black Holes Accuracy')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.title('Black Holes Accuracy')
-
-    plt.subplot(3, 3, 4)
-    plt.plot(sphalerons_accs, label='Sphalerons Accuracy')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.title('Sphalerons Accuracy')
-    
-    plt.subplot(3, 3, 5)
-    plt.plot(black_holes_precisions, label='Black Holes Precision')
-    plt.plot(sphalerons_precisions, label='Sphalerons Precision')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Precision')
-    plt.title('Black Holes and Sphalerons Precision')
-
-    plt.subplot(3, 3, 6)
-    plt.plot(black_holes_recalls, label='Black Holes Recall')
-    plt.plot(sphalerons_recalls, label='Sphalerons Recall')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Recall')
-    plt.title('Black Holes and Sphalerons Recall')
-    
-    plt.subplot(3, 3, 7)
-    plt.plot(black_holes_f1_scores, label='Black Holes F1-score')
-    plt.plot(sphalerons_f1_scores, label='Sphalerons F1-score')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('F1-score')
-    plt.title('Black Holes and Sphalerons F1-scores')
-
-    plt.tight_layout()
-    plt.show()
-
-    # Confusion matrix
-    cm = confusion_matrix(all_labels, all_preds)
-    plt.figure(figsize=(6, 6))
-    plt.imshow(cm, cmap=plt.cm.Blues)
-    plt.title('Confusion Matrix')
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
-    plt.xticks([0, 1], ['Black Holes', 'Sphalerons'])
-    plt.yticks([0, 1], ['Black Holes', 'Sphalerons'])
-
-    for i in range(2):
-        for j in range(2):
-            plt.text(j, i, cm[i, j], ha='center', va='center', color='black', fontsize=16)
-
-    plt.colorbar()
-    plt.show()

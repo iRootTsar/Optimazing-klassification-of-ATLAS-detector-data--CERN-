@@ -5,6 +5,83 @@ import torch
 from torch import Tensor
 
 
+#SymmetricNet Updated first pooling layer
+
+class CircularAvgPool2d(nn.Module):
+    def __init__(self, kernel_size, stride):
+        super(CircularAvgPool2d, self).__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+
+    def forward(self, x):
+        x_padded = F.pad(x, (0, 0, self.kernel_size // 2, self.kernel_size // 2), mode='circular')
+        return F.avg_pool2d(x_padded, self.kernel_size, self.stride)
+
+class SymmetricNet2(nn.Module):
+    def __init__(self, dropout):
+        super(SymmetricNet2, self).__init__()
+        
+        self.conv1 = nn.Conv2d(3, 128, 3)
+        self.bn1 = nn.BatchNorm2d(128)
+        self.pool1 = CircularAvgPool2d(2, 2)
+        self.dropout1 = nn.Dropout(dropout)
+        
+        self.conv2 = nn.Conv2d(128, 256, 4) #second layer
+        self.bn2 = nn.BatchNorm2d(256)
+        self.pool2 = nn.AvgPool2d(2, 2)
+        self.dropout2 = nn.Dropout(dropout)
+        
+        self.conv3 = nn.Conv2d(256, 512, 3) #third layer
+        self.bn3 = nn.BatchNorm2d(512)
+        self.pool3 = nn.AvgPool2d(2, 2)
+        self.dropout3 = nn.Dropout(dropout)
+        
+        self.conv4 = nn.Conv2d(512, 1024, 5, padding=2) #fourth layer
+        self.bn4 = nn.BatchNorm2d(1024)
+        self.pool4 = nn.AvgPool2d(2, 2)
+        self.dropout4 = nn.Dropout(dropout)
+        
+        self.fc1 = nn.Linear(1024 * 2 * 2, 256)
+        self.dropout5 = nn.Dropout(dropout)
+        
+        self.fc2 = nn.Linear(256, 2)
+        
+    def forward(self, x):
+        x_flipped_horizontal = torch.flip(x, [3]) # flip horizontally
+        x_rotated_180 = torch.rot90(x, 2, [2, 3]) # rotate 180
+        
+        x = F.relu(self.bn1(self.conv1(x)))
+        x_flipped_horizontal = F.relu(self.bn1(self.conv1(x_flipped_horizontal)))
+        x_rotated_180 = F.relu(self.bn1(self.conv1(x_rotated_180)))
+        
+        x = self.pool1(x)
+        x_flipped_horizontal = self.pool1(x_flipped_horizontal)
+        x_rotated_180 = self.pool1(x_rotated_180)
+        
+        x = (x + x_flipped_horizontal + x_rotated_180) / 3
+        x = self.dropout1(x)
+        
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = self.pool2(x)
+        x = self.dropout2(x)
+        
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.pool3(x)
+        x = self.dropout3(x)
+        
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = self.pool4(x)
+        x = self.dropout4(x)
+        
+        x = x.reshape(-1, 1024 * 2 * 2)
+        x = F.relu(self.fc1(x))
+        x = self.dropout5(x)
+        
+        x = self.fc2(x)
+        return x
+        
+        
+
 #Symmetric net følgjer ikke noen konkret struktur til ResNet eller VGG net men har noen 
 #karakteristikk til VGG med bruk av små konsolusjonslager med flere lag. 
 #Og bruk av average poolign i staden for max pooling
@@ -38,41 +115,41 @@ class SymmetricNet(nn.Module):
         self.fc2 = nn.Linear(256, 2)
 
     def forward(self, x):
-        x_flipped_horizontal = torch.flip(x, [3]) #flip horizontally
-        x_flipped_vertical = torch.flip(x, [2]) #flip vertically
-        x_rotated_180 = torch.rot90(x, 2, [2,3])#rotate 180
-        
+        x_flipped_horizontal = torch.flip(x, [3]) # flip horizontally
+        x_rotated_180 = torch.rot90(x, 2, [2, 3]) # rotate 180 degrees
+
         x = F.relu(self.bn1(self.conv1(x)))
         x_flipped_horizontal = F.relu(self.bn1(self.conv1(x_flipped_horizontal)))
-        x_flipped_vertical = F.relu(self.bn1(self.conv1(x_flipped_vertical)))
         x_rotated_180 = F.relu(self.bn1(self.conv1(x_rotated_180)))
-        
+
         x = self.pool1(x)
         x_flipped_horizontal = self.pool1(x_flipped_horizontal)
-        x_flipped_vertical = self.pool1(x_flipped_vertical)
         x_rotated_180 = self.pool1(x_rotated_180)
-        
-        x = (x + x_flipped_vertical + x_rotated_180 + x_flipped_horizontal) / 4
+    
+        x_flipped_vertical = torch.roll(x, shifts=1, dims=2) # displace in the y-axis
+
+        x = (x + x_flipped_horizontal + x_rotated_180 + x_flipped_vertical) / 4
         x = self.dropout1(x)
-        
+
         x = F.relu(self.bn2(self.conv2(x)))
         x = self.pool2(x)
         x = self.dropout2(x)
-        
+
         x = F.relu(self.bn3(self.conv3(x)))
         x = self.pool3(x)
         x = self.dropout3(x)
-        
+
         x = F.relu(self.bn4(self.conv4(x)))
         x = self.pool4(x)
         x = self.dropout4(x)
-        
+
         x = x.reshape(-1, 1024 * 2 * 2)
         x = F.relu(self.fc1(x))
         x = self.dropout5(x)
-        
+
         x = self.fc2(x)
         return x
+
 
 
 #Regular convModel
@@ -141,46 +218,7 @@ class ConvModel(nn.Module):
         x = self.dropout(x)
         #Apply droput to layers??
         return x
-#Convomodel that works when use data augmentation
-
-class ConvModelAug(nn.Module):
-    def __init__(self, dropout):
-        super(ConvModelAug, self).__init__()
-
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=64, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(in_channels=64, out_channels=256, kernel_size=3, padding=1)
-        
-        # Determine the input shape for fc1 after the pooling layers
-        def calc_output_shape(input_size, kernel_size, stride, padding):
-            return (input_size + 2 * padding - (kernel_size - 1) - 1) // stride + 1
-
-        input_size = 50
-        input_size = calc_output_shape(input_size, 2, 2, 0)  # First max pool
-        input_size = calc_output_shape(input_size, 2, 2, 0)  # Second max pool
-        input_size = calc_output_shape(input_size, 2, 2, 0)  # Third max pool
-        
-        self.fc1 = nn.Linear(256 * input_size * input_size, 128)
-        self.fc2 = nn.Linear(128, 2)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.conv2(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.conv3(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.dropout(x)
-        return x
+    
 
 
 #VGG architecture with first pooling layer adjustments
@@ -234,16 +272,18 @@ class VGGNet(nn.Module):
         )
 
     def forward(self, x):
+        shift_amount = x.size(2) // 2  # shift the image by half of the height
+        x_shifted = torch.roll(x, shift_amount, 2)  # roll the image along the y-axis
+        
         x_flipped_horizontal = torch.flip(x, [3])  # flip horizontally
-        x_flipped_vertical = torch.flip(x, [2])  # flip vertically
         x_rotated_180 = torch.rot90(x, 2, [2, 3])  # rotate 180
 
         x = self.features(x)
+        x_shifted = self.features(x_shifted)
         x_flipped_horizontal = self.features(x_flipped_horizontal)
-        x_flipped_vertical = self.features(x_flipped_vertical)
         x_rotated_180 = self.features(x_rotated_180)
 
-        x = (x + x_flipped_horizontal + x_flipped_vertical + x_rotated_180) / 4
+        x = (x + x_shifted + x_flipped_horizontal + x_rotated_180) / 4
 
         x = x.reshape(-1, 512 * 3 * 3)
         x = self.classifier(x)
@@ -315,16 +355,17 @@ class VGGNet2(nn.Module):
         )
 
     def forward(self, x):
+        shift_amount = x.size(2) // 2  # shift the image by half of the height
+        x_shifted = torch.roll(x, shift_amount, 2)  # roll the image along the y-axis
         x_flipped_horizontal = torch.flip(x, [3])  # flip horizontally
-        x_flipped_vertical = torch.flip(x, [2])  # flip vertically
         x_rotated_180 = torch.rot90(x, 2, [2, 3])  # rotate 180
 
         x = self.features(x)
+        x_shifted = self.features(x_shifted)
         x_flipped_horizontal = self.features(x_flipped_horizontal)
-        x_flipped_vertical = self.features(x_flipped_vertical)
         x_rotated_180 = self.features(x_rotated_180)
 
-        x = (x + x_flipped_horizontal + x_flipped_vertical + x_rotated_180) / 4
+        x = (x + x_shifted + x_flipped_horizontal + x_rotated_180) / 4
 
         x = x.reshape(-1, 512 * 3 * 3)
         x = self.classifier(x)
@@ -332,6 +373,7 @@ class VGGNet2(nn.Module):
 
 
 #ResNet like model with first pooling layer adjustments
+#It sucks
 
 # Define the BasicBlock for ResNet
 class BasicBlock(nn.Module):
@@ -376,21 +418,23 @@ class ResSymmetricNet(nn.Module):
         self.fc2 = nn.Linear(256, 2)
 
     def forward(self, x):
+        shift_amount = x.size(2) // 2  # shift the image by half of the height
+        x_shifted = torch.roll(x, shift_amount, 2)  # roll the image along the y-axis
+        
         x_flipped_horizontal = torch.flip(x, [3])  # flip horizontally
-        x_flipped_vertical = torch.flip(x, [2])  # flip vertically
         x_rotated_180 = torch.rot90(x, 2, [2, 3])  # rotate 180
 
         x = F.relu(self.bn1(self.conv1(x)))
+        x_shifted = F.relu(self.bn1(self.conv1(x_shifted)))
         x_flipped_horizontal = F.relu(self.bn1(self.conv1(x_flipped_horizontal)))
-        x_flipped_vertical = F.relu(self.bn1(self.conv1(x_flipped_vertical)))
         x_rotated_180 = F.relu(self.bn1(self.conv1(x_rotated_180)))
 
         x = self.pool1(x)
+        x_shifted = self.pool1(x_shifted)
         x_flipped_horizontal = self.pool1(x_flipped_horizontal)
-        x_flipped_vertical = self.pool1(x_flipped_vertical)
         x_rotated_180 = self.pool1(x_rotated_180)
 
-        x = (x + x_flipped_horizontal + x_flipped_vertical + x_rotated_180) / 4
+        x = (x + x_shifted + x_flipped_horizontal + x_rotated_180) / 4
         x = self.dropout1(x)
 
         x = self.layer1(x)
