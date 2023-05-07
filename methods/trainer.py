@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
+from tabulate import tabulate
+import numpy as np
 
 # Set random seeds for reproducibility
 torch.manual_seed(42)
@@ -18,7 +20,6 @@ else:
     print("Running on the CPU")
 
 def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, scheduler, early_stopping_patience):
-    
     # Initialize lists to store the metrics
     train_losses = []
     train_accs = []
@@ -26,42 +27,40 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
     test_accs = []
     black_holes_accs = []
     sphalerons_accs = []
-    black_holes_precisions = []
-    sphalerons_precisions = []
-    black_holes_recalls = []
-    sphalerons_recalls = []
-    black_holes_f1_scores = []
-    sphalerons_f1_scores = []
-    
+    test_precisions = []
+    test_recalls = []
+
     best_val_loss = float('inf')
     best_model_state_dict = None
     no_improvement_count = 0
-    
+
+    metrics_table = []
+
     for epoch in range(n_epochs):
         # Train
-        model.train() #set the model to train mode
+        model.train()  # set the model to train mode
         train_loss = 0
         correct = 0
         total = 0
-    
-        for inputs, labels in train_loader:
-            inputs, labels = inputs.to(device).float(), labels.to(device).long() #Mode inputs and labels to the device
-            optimizer.zero_grad() #Zero the gradients
-            outputs = model(inputs).float() #Pass inputs to the model and get the outputs
-            loss = criterion(outputs, labels) #calculate the loss
-            loss.backward() #Backpropogate the loss
-            optimizer.step() #Update the model parameters
 
-            train_loss += loss.item() #Accumulate the trainings loss
-            _, predicted = outputs.max(1) #Get the predictions
-            total += labels.size(0) #Accumulate the number of examples
-            correct += predicted.eq(labels).sum().item() #Accumulate the number of correct predictions
-        
-        train_acc = 100 * correct / total #Caulculate the training accuracy
-        train_loss /= len(train_loader) #Average the training loss
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device).float(), labels.to(device).long()  # Mode inputs and labels to the device
+            optimizer.zero_grad()  # Zero the gradients
+            outputs = model(inputs).float()  # Pass inputs to the model and get the outputs
+            loss = criterion(outputs, labels)  # calculate the loss
+            loss.backward()  # Backpropogate the loss
+            optimizer.step()  # Update the model parameters
+
+            train_loss += loss.item()  # Accumulate the trainings loss
+            _, predicted = outputs.max(1)  # Get the predictions
+            total += labels.size(0)  # Accumulate the number of examples
+            correct += predicted.eq(labels).sum().item()  # Accumulate the number of correct predictions
+
+        train_acc = 100 * correct / total  # Calculate the training accuracy
+        train_loss /= len(train_loader)  # Average the training loss
 
         # Test
-        model.eval() #Set the model to evaluation mode
+        model.eval()  # Set the model to evaluation mode
         test_loss = 0
         correct = 0
         total = 0
@@ -73,39 +72,33 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
         all_labels = []
         val_loss = 0
 
-        with torch.no_grad(): #Disable gradient computation 
+        with torch.no_grad():  # Disable gradient computation
             for inputs, labels in test_loader:
-                inputs, labels = inputs.to(device).float(), labels.to(device).long() #Move inputs and labels to device
-                outputs = model(inputs).float() #Pass inputs to the model and get the outputs
-                
-                loss = criterion(outputs, labels) #Calculate the loss
+                inputs, labels = inputs.to(device).float(), labels.to(device).long()  # Move inputs and labels to device
+                outputs = model(inputs).float()  # Pass inputs to the model and get the outputs
+
+                loss = criterion(outputs, labels)  # Calculate the loss
 
                 val_loss += loss.item()
                 test_loss += loss.item()
-                _, predicted = outputs.max(1) #Get the predictions
-                total += labels.size(0) #Accumulate the number of examples
-                correct += predicted.eq(labels).sum().item() #Accumulate the number of correct predictions
-
+                _, predicted = outputs.max(1)  # Get the predictions
+                total += labels.size(0) # Accumulate the number of examples
+                correct += predicted.eq(labels).sum().item() # Accumulate the number of correct predictions
                 # Separate accuracies for black holes and sphalerons
-                black_holes_correct += (predicted * labels).sum().item()
-                sphalerons_correct += ((1 - predicted) * (1 - labels)).sum().item()
-                black_holes_total += labels.sum().item()
-                sphalerons_total += (1 - labels).sum().item()
+            black_holes_correct += (predicted * labels).sum().item()
+            sphalerons_correct += ((1 - predicted) * (1 - labels)).sum().item()
+            black_holes_total += labels.sum().item()
+            sphalerons_total += (1 - labels).sum().item()
 
-                all_preds.extend(predicted.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
 
-
-        
         test_acc = 100 * correct / total
         black_holes_acc = 100 * black_holes_correct / black_holes_total
         sphalerons_acc = 100 * sphalerons_correct / sphalerons_total
         test_loss /= len(test_loader)
         # Calculate precision and recall
-        precision, recall, f1_scores, _ = precision_recall_fscore_support(all_labels, all_preds, average=None)
-        black_holes_precision, sphalerons_precision = precision
-        black_holes_recall, sphalerons_recall = recall
-        black_holes_f1_score, sphalerons_f1_score = f1_scores
+        precision, recall, _, _ = precision_recall_fscore_support(all_labels, all_preds, average=None)
 
         # Print results
         print(f"Epoch: {epoch}/{n_epochs}")
@@ -119,27 +112,29 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
         test_accs.append(test_acc)
         black_holes_accs.append(black_holes_acc)
         sphalerons_accs.append(sphalerons_acc)
-        black_holes_precisions.append(black_holes_precision)
-        sphalerons_precisions.append(sphalerons_precision)
-        black_holes_recalls.append(black_holes_recall)
-        sphalerons_recalls.append(sphalerons_recall)
-        black_holes_f1_scores.append(black_holes_f1_score)
-        sphalerons_f1_scores.append(sphalerons_f1_score)
+        test_precisions.append(precision)
+        test_recalls.append(recall)
 
-        scheduler.step(val_loss) #Update learning rate using the scheduler
+        metrics_table.append([
+            epoch, train_loss, train_acc, test_loss, test_acc,
+            black_holes_acc, sphalerons_acc, *precision, *recall
+        ])
+
+        scheduler.step(val_loss)  # Update learning rate using the scheduler
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model_state_dict = model.state_dict()
             no_improvement_count = 0
         else:
             no_improvement_count += 1
-        
+
         if no_improvement_count >= early_stopping_patience:
             print(f"Early stopping at epoch {epoch}")
             break
-     # Load the best model state
+
+    # Load the best model state
     model.load_state_dict(best_model_state_dict)
-        
+
     # Plot the metrics
     plt.figure(figsize=(18, 18))
     plt.subplot(3, 3, 1)
@@ -173,45 +168,34 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
     plt.title('Sphalerons Accuracy')
     
     plt.subplot(3, 3, 5)
-    plt.plot(black_holes_precisions, label='Black Holes Precision')
-    plt.plot(sphalerons_precisions, label='Sphalerons Precision')
+    plt.plot(test_precisions, label='Test Precision')
     plt.legend()
     plt.xlabel('Epoch')
     plt.ylabel('Precision')
-    plt.title('Black Holes and Sphalerons Precision')
+    plt.title('Test Precision')
 
     plt.subplot(3, 3, 6)
-    plt.plot(black_holes_recalls, label='Black Holes Recall')
-    plt.plot(sphalerons_recalls, label='Sphalerons Recall')
+    plt.plot(test_recalls, label='Test Recall')
     plt.legend()
     plt.xlabel('Epoch')
     plt.ylabel('Recall')
-    plt.title('Black Holes and Sphalerons Recall')
-    
-    plt.subplot(3, 3, 7)
-    plt.plot(black_holes_f1_scores, label='Black Holes F1-score')
-    plt.plot(sphalerons_f1_scores, label='Sphalerons F1-score')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('F1-score')
-    plt.title('Black Holes and Sphalerons F1-scores')
+    plt.title('Test Recall')
 
     plt.tight_layout()
     plt.show()
+    
+    # Print tabular data
+    headers = [
+        "Epoch", "Train Loss", "Train Acc", "Test Loss", "Test Acc",
+        "BH Acc", "Sph Acc", "BH Precision", "Sph Precision", "BH Recall", "Sph Recall"
+    ]
 
-    # Confusion matrix
-    cm = confusion_matrix(all_labels, all_preds)
-    plt.figure(figsize=(6, 6))
-    plt.imshow(cm, cmap=plt.cm.Blues)
-    plt.title('Confusion Matrix')
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
-    plt.xticks([0, 1], ['Black Holes', 'Sphalerons'])
-    plt.yticks([0, 1], ['Black Holes', 'Sphalerons'])
+    print(tabulate(metrics_table, headers=headers, floatfmt=".2f"))
 
-    for i in range(2):
-        for j in range(2):
-            plt.text(j, i, cm[i, j], ha='center', va='center', color='black', fontsize=16)
-
-    plt.colorbar()
-    plt.show()
+    metrics_table_np = np.array(metrics_table)
+    mean = np.mean(metrics_table_np[:, 1:], axis=0)
+    std_dev = np.std(metrics_table_np[:, 1:], axis=0)
+    mean_std_row = np.hstack((['Mean ± Std Dev'], ['{:.2f} ± {:.2f}'.format(m, s) for m, s in zip(mean, std_dev)]))
+    mean_std_row = np.hstack((mean_std_row[0:1], ['{:.2f} ± {:.2f}'.format(mean[0], std_dev[0])], [''], mean_std_row[2:]))
+    print(tabulate([mean_std_row], headers=headers))
+    

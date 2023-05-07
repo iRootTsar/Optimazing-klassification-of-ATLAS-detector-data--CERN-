@@ -10,8 +10,12 @@ else:
     device = torch.device("cpu")
     print("Running on the CPU")
 
-def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
+def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, scheduler):
     
+    #save best model
+    best_val_loss = float("inf")  # Initialize the best validation loss as infinity
+    best_model_state = None  # Initialize the best model state as None
+
     # Initialize lists to store the metrics
     train_losses = []
     train_accs = []
@@ -30,6 +34,9 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
         train_loss = 0
         correct = 0
         total = 0
+        best_all_preds = [] # Initialize the best all_preds list
+        best_all_labels = []  # Initialize the best all_labels list
+    
     
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device).float(), labels.to(device).long() # Move inputs and labels to the device
@@ -58,12 +65,14 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
         sphalerons_total = 0
         all_preds = []
         all_labels = []
+        val_loss = 0
 
         with torch.no_grad(): # Disable gradient computation 
             for inputs, labels in test_loader:
                 inputs, labels = inputs.to(device).float(), labels.to(device).long() # Move inputs and labels to device
                 outputs = model(inputs).float() # Pass inputs to the model and get the outputs
                 
+                val_loss += loss.item()
                 loss = criterion(outputs, labels) # Calculate the loss
                 test_loss += loss.item()
                 _, predicted = outputs.max(1) # Get the predictions
@@ -103,8 +112,15 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
         # print(f"Epoch: {epoch}/{n_epochs}")
         # print(f"Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.2f}%")
         # print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
+        
+        if test_loss < best_val_loss:  # If the current validation loss is lower than the best validation loss
+            best_val_loss = test_loss  # Update the best validation loss
+            best_model_state = model.state_dict()  # Save the current model state
+            best_all_preds = all_preds
+            best_all_labels = all_labels
 
-
+        scheduler.step(val_loss) #Update learning rate using the scheduler
+        
         metrics = {
             'epoch': epoch,
             'train_losses': train_loss,
@@ -120,4 +136,4 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs):
         }
         metrics_per_epoch.append(metrics)
     
-    return metrics_per_epoch
+    return metrics_per_epoch, best_model_state, best_all_preds, best_all_labels

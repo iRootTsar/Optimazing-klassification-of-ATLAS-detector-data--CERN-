@@ -78,14 +78,14 @@ class ConvModelFPLRoll(nn.Module):
 
         return x
     
-#COnvolutional layer with first pooling layer adjustment
+#Convolutional layer with first pooling layer adjustment
 # Custom pooling layer
 def circular_shift(tensor: Tensor, shift: int, dim: int):
     return torch.cat((tensor[:, :, -shift:], tensor[:, :, :-shift]), dim=dim)
 
 def symmetry_pooling(x: Tensor, shift: int):
     x_lr = torch.flip(x, dims=[3])  # Left-right symmetry
-    x_ud = circular_shift(x, shift, dim=2)  # Top-bottom symmetry with circular shift in y-axis
+    x_ud = circular_shift(x, shift, dim=2)  # CIrcular shift for cyllindrical symmetry
     x_lr_ud = torch.flip(x_ud, dims=[3])  # 180-degree rotation
 
     return (x + x_lr + x_ud + x_lr_ud) / 4
