@@ -95,8 +95,6 @@ def train(model, train_loader, test_loader, optimizer, criterion, n_epochs, sche
 
         # Calculate precision and recall
         precision, recall, _, _ = precision_recall_fscore_support(all_labels, all_preds, average=None)
-        black_holes_precision, sphalerons_precision = precision[0], precision[1]
-        black_holes_recall, sphalerons_recall = recall[0], recall[1]
 
         # Append the metrics to the lists
         train_losses.append(train_loss)
