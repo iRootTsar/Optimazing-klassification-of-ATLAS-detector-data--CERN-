@@ -32,6 +32,75 @@ Mål for prosjektet:
 
 - Undersøke om, og hvordan, symmetri-egenskapene til detektorbildene kan utnyttes til «data augmentation» uten å innføre bias i klassifikasjonen. 
 
+# Mappe struktur
+
+├───data
+│       BH_n4_M10_res50_15000_events.h5
+│       PP13-Sphaleron-THR9-FRZ15-NB0-NSUBPALL_res50_15000_events.h5
+│
+├───Extra
+│       heatmap.ipynb
+│       visual.ipynb
+│
+├───methods
+│   │   .gitignore
+│   │   directory_structure.txt
+│   │   fold.txt
+│   │   folder.txt
+│   │   README.md
+│   │
+│   ├───__pycache__
+│   │       dataloader.cpython-39.pyc
+│   │       nnmodel.cpython-39.pyc
+│   │       plotCreator.cpython-39.pyc
+│   │       train.cpython-39.pyc
+│   │       trainer.cpython-39.pyc
+│   │       trainerDataAug.cpython-39.pyc
+│   │       trainerRet.cpython-39.pyc
+│   │
+│   ├───dataloader.py
+│   ├───nnmodel.py
+│   ├───plotCreator.py
+│   ├───train.py
+│   ├───trainer.py
+│   └───trainerRet.py
+│
+└───notebooks
+    ├───fast.ai
+    │       firstModell.ipynb
+    │
+    └───pyTorch
+        ├───Trained_models
+        │       FInal
+        │       model_checkpoint.pth
+        │       model_checkpoint_aug.pth
+        │       model_checkpoint_augResSymm.pth
+        │       model_checkpoint_aug_SymmNet.pth
+        │       model_checkpoint_aug_VGGNet.pth
+        │       model_checkpoint_aug_VGGNet2.pth
+        │       model_checkpoint_aug_VGGNet3.pth
+        │       model_checkpoint_aug_VGGNet4.pth
+        │       model_checkpoint_aug_VGGNet5.pth
+        │       model_checkpoint_aug_VGGNet6.pth
+        │       model_checkpoint_aug_VGGNet7.pth
+        │       model_ConvModel.pth
+        │       model_ConvModel1.pth
+        │       VGGNETLAST.pth
+        │
+        ├───Combined_Data_Augm.ipynb
+        ├───ConvoCompare.ipynb
+        ├───ConvoModRuns copy.ipynb
+        ├───ConvoRuns.ipynb
+        ├───DataAugm_CNNMod.ipynb
+        ├───DataAugm_CNNSimple.ipynb
+        ├───FinalCNNMod.ipynb
+        ├───FinalCNNModRoll.ipynb
+        ├───FinalCNNSimple.ipynb
+        ├───FinalVGGNet.ipynb
+        ├───ResNet.ipynb
+        ├───ResnetSymUpd.ipynb
+        └───VanligCNN.ipynb
+        
 # Miljø oppsett
 Anaconda env deretter
 Python
