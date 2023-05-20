@@ -33,7 +33,7 @@ Mål for prosjektet:
 - Undersøke om, og hvordan, symmetri-egenskapene til detektorbildene kan utnyttes til «data augmentation» uten å innføre bias i klassifikasjonen. 
 
 # Mappe struktur
-
+'''
 ├───data
 │       BH_n4_M10_res50_15000_events.h5
 │       PP13-Sphaleron-THR9-FRZ15-NB0-NSUBPALL_res50_15000_events.h5
@@ -99,7 +99,7 @@ Mål for prosjektet:
         ├───FinalVGGNet.ipynb
         ├───ResNet.ipynb
         ├───ResnetSymUpd.ipynb
-        └───VanligCNN.ipynb
+        └───VanligCNN.ipynb'''
         
 # Miljø oppsett
 Anaconda env deretter
