@@ -44,9 +44,7 @@ Mål for prosjektet:
 │
 ├───methods
 │   │   .gitignore
-│   │   directory_structure.txt
-│   │   fold.txt
-│   │   folder.txt
+│   │   req.txt
 │   │   README.md
 │   │
 │   ├───__pycache__
@@ -103,17 +101,20 @@ Mål for prosjektet:
 ```        
         
 # Miljø oppsett
-Anaconda env deretter
-Python
-Pytorch
-Numpy
-conda
-matplotlib
-fastai
-sys
-pathlib
+## Tips when trying to reuse the code
+1. Install necessary apps, VSCode and anaconda from:
+https://docs.anaconda.com/free/anaconda/install/
 
-# In case commits link to another user
-Open terminal in vscode (despite what kernel you used)
-git config user.email "Your email"
-git config user.email
+https://code.visualstudio.com/download
+
+2. Import project to your vscode enviroment (You can see that my tree structure is a bit different since i have folders data and flagged but they are not necessary to test gradio interface i created to classify images, but they are necessary to run training on models and evaluation, reason they are nto uploaded since they are out of allowed memory for upload on Github)
+
+3. Import the project into your VSCode environment. Note that my folder structure is slightly different as it includes the "data" and "flagged" folders, which are not necessary to test the Gradio interface I created for classifying images. However, they are necessary for training and evaluating the models. These folders are not uploaded to GitHub due to memory constraints.
+
+4. Once Anaconda is installed, launch it. A terminal window resembling a Bash script will pop up. Don't worry, it's just how Anaconda works. After a while, you will see a green circle and the application will start. Now, navigate to your VSCode, open the terminal in VSCode, ensure it is in the project directory, and run the following command:
+
+$ conda create -n --file req.txt
+
+Replace with the desired name for your environment. It may take some time to download all the required packages.
+
+
