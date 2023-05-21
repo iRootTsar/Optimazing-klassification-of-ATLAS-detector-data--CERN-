@@ -32,18 +32,89 @@ Mål for prosjektet:
 
 - Undersøke om, og hvordan, symmetri-egenskapene til detektorbildene kan utnyttes til «data augmentation» uten å innføre bias i klassifikasjonen. 
 
+# Mappe struktur
+```
+├───data
+│       BH_n4_M10_res50_15000_events.h5
+│       PP13-Sphaleron-THR9-FRZ15-NB0-NSUBPALL_res50_15000_events.h5
+│
+├───Extra
+│       heatmap.ipynb
+│       visual.ipynb
+│
+├───methods
+│   │   .gitignore
+│   │   req.txt
+│   │   README.md
+│   │
+│   ├───__pycache__
+│   │       dataloader.cpython-39.pyc
+│   │       nnmodel.cpython-39.pyc
+│   │       plotCreator.cpython-39.pyc
+│   │       train.cpython-39.pyc
+│   │       trainer.cpython-39.pyc
+│   │       trainerDataAug.cpython-39.pyc
+│   │       trainerRet.cpython-39.pyc
+│   │
+│   ├───dataloader.py
+│   ├───nnmodel.py
+│   ├───plotCreator.py
+│   ├───train.py
+│   ├───trainer.py
+│   └───trainerRet.py
+│
+└───notebooks
+    ├───fast.ai
+    │       firstModell.ipynb
+    │
+    └───pyTorch
+        ├───Trained_models
+        │       FInal
+        │       model_checkpoint.pth
+        │       model_checkpoint_aug.pth
+        │       model_checkpoint_augResSymm.pth
+        │       model_checkpoint_aug_SymmNet.pth
+        │       model_checkpoint_aug_VGGNet.pth
+        │       model_checkpoint_aug_VGGNet2.pth
+        │       model_checkpoint_aug_VGGNet3.pth
+        │       model_checkpoint_aug_VGGNet4.pth
+        │       model_checkpoint_aug_VGGNet5.pth
+        │       model_checkpoint_aug_VGGNet6.pth
+        │       model_checkpoint_aug_VGGNet7.pth
+        │       model_ConvModel.pth
+        │       model_ConvModel1.pth
+        │       VGGNETLAST.pth
+        │
+        ├───Combined_Data_Augm.ipynb
+        ├───ConvoCompare.ipynb
+        ├───ConvoModRuns copy.ipynb
+        ├───ConvoRuns.ipynb
+        ├───DataAugm_CNNMod.ipynb
+        ├───DataAugm_CNNSimple.ipynb
+        ├───FinalCNNMod.ipynb
+        ├───FinalCNNModRoll.ipynb
+        ├───FinalCNNSimple.ipynb
+        ├───FinalVGGNet.ipynb
+        ├───ResNet.ipynb
+        ├───ResnetSymUpd.ipynb
+        └───VanligCNN.ipynb
+```        
+        
 # Miljø oppsett
-Anaconda env deretter
-Python
-Pytorch
-Numpy
-conda
-matplotlib
-fastai
-sys
-pathlib
+## Tips when trying to reuse the code
+1. Install necessary apps, VSCode and anaconda from:
+https://docs.anaconda.com/free/anaconda/install/
 
-# In case commits link to another user
-Open terminal in vscode (despite what kernel you used)
-git config user.email "Your email"
-git config user.email
+https://code.visualstudio.com/download
+
+2. Import project to your vscode enviroment (You can see that my tree structure is a bit different since i have folders data and flagged but they are not necessary to test gradio interface i created to classify images, but they are necessary to run training on models and evaluation, reason they are nto uploaded since they are out of allowed memory for upload on Github)
+
+3. Import the project into your VSCode environment. Note that my folder structure is slightly different as it includes the "data" and "flagged" folders, which are not necessary to test the Gradio interface I created for classifying images. However, they are necessary for training and evaluating the models. These folders are not uploaded to GitHub due to memory constraints.
+
+4. Once Anaconda is installed, launch it. A terminal window resembling a Bash script will pop up. Don't worry, it's just how Anaconda works. After a while, you will see a green circle and the application will start. Now, navigate to your VSCode, open the terminal in VSCode, ensure it is in the project directory, and run the following command:
+
+$ conda create -n --file req.txt
+
+Replace with the desired name for your environment. It may take some time to download all the required packages.
+
+
